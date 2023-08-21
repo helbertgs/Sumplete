@@ -9,7 +9,8 @@
 #define RED "\033[0;31m"
 #define GREEN "\033[0;32m"
 
-// Estrutura de dados com todas as informações necessárias para o funcionamento do jogo.
+// Estrutura de dados com todas as informações necessárias para o funcionamento
+// do jogo.
 typedef struct Sumplete Sumplete;
 struct Sumplete {
   int **board;
@@ -38,7 +39,8 @@ void initialize(Sumplete *sumplete) {
   }
 }
 
-// Altera a cor do elemento, quando o mesmo for exibido no console. A cor sera baseada no estado do elemento.
+// Altera a cor do elemento, quando o mesmo for exibido no console. A cor sera
+// baseada no estado do elemento.
 void changeCharacterColor(int value, int state) {
   switch (state) {
   case 1:
@@ -60,7 +62,8 @@ void changeCharacterColor(int value, int state) {
 void printBoard(Sumplete *sumplete) {
   for (int row = 0; row < sumplete->size; row++) {
     for (int col = 0; col < sumplete->size; col++) {
-      changeCharacterColor(sumplete->board[row][col], sumplete->states[row][col]);
+      changeCharacterColor(sumplete->board[row][col],
+                           sumplete->states[row][col]);
     }
 
     printf("| %d\n", sumplete->rows[row]);
@@ -113,18 +116,21 @@ void selectBoardSize(Sumplete *sumplete) {
   bool execute = true;
 
   while (execute) {
-    int *size;
+    int size;
     printf("Digite o tamanho do tabuleiro (3 a 9): ");
-    scanf("%d", size);
+    scanf("%d", &size);
 
-    if (size > 2 &&  size < 10) {
+    int *aux = &size;
+
+    if (*aux > 2 && *aux < 10) {
       sumplete->size = size;
-      execute = false
+      execute = false;
     }
   }
 }
 
-// Solicita ao jogador o nivel de dificuldade do tabuleiro apenas se a dimensão do tabuleiro for maior que 4.
+// Solicita ao jogador o nivel de dificuldade do tabuleiro apenas se a dimensão
+// do tabuleiro for maior que 4.
 void selectLevel(Sumplete *sumplete) {
   if (sumplete->size < 5) {
     sumplete->level = "F";
@@ -134,12 +140,15 @@ void selectLevel(Sumplete *sumplete) {
   bool execute = true;
 
   while (execute) {
-    char *level;
-    printf("Digite o nivel de dificuldade:\nF - Facil\nM - Medio\nD - Dificil\nDificuldade: ");
-    scanf("%c", level);
+    char level;
+    printf("Digite o nivel de dificuldade:");
+	printf("\nF - Facil\nM - Medio\nD - Dificil\nDificuldade: ");
+    scanf(" %c", &level);
 
-    if (level == "D" || level == "F" || level == "M") {
-      sumplete->level = level;
+    char *aux = &level;
+
+    if (*aux == 'D' || *aux == 'F' || *aux == 'M') {
+      sumplete->level = &level;
       execute = false;
     }
   }
@@ -150,27 +159,26 @@ void startNewGame(Sumplete *sumplete) {
   selectPlayerName(sumplete);
   selectBoardSize(sumplete);
   selectLevel(sumplete);
-
   initialize(sumplete);
-  continueGame(sumplete);
+  printBoard(sumplete);
+  // continueGame(sumplete);
 }
 
 // Carrega um jogo salvo.
-void loadGame(Sumplete *sumplete) {
-}
+void loadGame(Sumplete *sumplete) {}
 
 // Continua com o jogo atual.
 void continueGame(Sumplete *sumplete) {
+  char *command;
+  printf("%s, digite o comando: ", sumplete->playername);
+  scanf("%s", command);
 }
 
 // Exibe o ranking.
-void showRanking(Sumplete *sumplete) {
-}
+void showRanking(Sumplete *sumplete) {}
 
 // Encerra o jogo.
-void exitGame(Sumplete *sumplete) {
-  sumplete->isFinished = true;
-}
+void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
 
 // Menu principal do jogo.
 void menu(Sumplete *sumplete) {
