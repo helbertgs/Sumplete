@@ -13,6 +13,7 @@ typedef struct Sumplete Sumplete;
 struct Sumplete {
   int **board;
   int *cols;
+  bool isFinished;
   char *level;
   char *playername;
   int *rows;
@@ -28,6 +29,7 @@ void initialize(Sumplete *sumplete, int size) {
   sumplete->size = size;
   sumplete->playername = "";
   sumplete->level = "";
+  sumplete->isFinished = false;
 
   for (int row = 0; row < size; row++) {
     sumplete->board[row] = (int *)malloc(size * sizeof(int *));
@@ -103,6 +105,7 @@ void showRanking(Sumplete *sumplete) {
 }
 
 void exitGame(Sumplete *sumplete) {
+  sumplete->isFinished = true;
 }
 
 void menu(Sumplete *sumplete) {
