@@ -12,10 +12,12 @@
 typedef struct Sumplete Sumplete;
 struct Sumplete {
   int **board;
-  int **states;
   int *cols;
+  char *level;
+  char *playername;
   int *rows;
   int size;
+  int **states;
 };
 
 void initialize(Sumplete *sumplete, int size) {
@@ -24,6 +26,8 @@ void initialize(Sumplete *sumplete, int size) {
   sumplete->cols = (int *)malloc(size * sizeof(int *));
   sumplete->rows = (int *)malloc(size * sizeof(int *));
   sumplete->size = size;
+  sumplete->playername = "";
+  sumplete->level = "";
 
   for (int row = 0; row < size; row++) {
     sumplete->board[row] = (int *)malloc(size * sizeof(int *));
