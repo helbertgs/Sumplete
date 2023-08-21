@@ -18,21 +18,17 @@ struct Sumplete {
   int size;
 };
 
-Sumplete init(int size) {
-  Sumplete sumplete;
-
-  sumplete.board = (int **)malloc(size * sizeof(int *));
-  sumplete.states = (int **)malloc(size * sizeof(int *));
-  sumplete.cols = (int *)malloc(size * sizeof(int *));
-  sumplete.rows = (int *)malloc(size * sizeof(int *));
-  sumplete.size = size;
+void initialize(Sumplete *sumplete, int size) {
+  sumplete->board = (int **)malloc(size * sizeof(int *));
+  sumplete->states = (int **)malloc(size * sizeof(int *));
+  sumplete->cols = (int *)malloc(size * sizeof(int *));
+  sumplete->rows = (int *)malloc(size * sizeof(int *));
+  sumplete->size = size;
 
   for (int row = 0; row < size; row++) {
-    sumplete.board[row] = (int *)malloc(size * sizeof(int *));
-    sumplete.states[row] = (int *)malloc(size * sizeof(int *));
+    sumplete->board[row] = (int *)malloc(size * sizeof(int *));
+    sumplete->states[row] = (int *)malloc(size * sizeof(int *));
   }
-
-  return sumplete;
 }
 
 // Altera a cor do elemento, quando o mesmo for exibido no console. A cor sera baseada no estado do elemento.
