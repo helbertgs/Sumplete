@@ -23,19 +23,18 @@ struct Sumplete {
 };
 
 // Inicializa as informações do jogo.
-void initialize(Sumplete *sumplete, int size) {
-  sumplete->board = (int **)malloc(size * sizeof(int *));
-  sumplete->states = (int **)malloc(size * sizeof(int *));
-  sumplete->cols = (int *)malloc(size * sizeof(int *));
-  sumplete->rows = (int *)malloc(size * sizeof(int *));
-  sumplete->size = size;
+void initialize(Sumplete *sumplete) {
+  sumplete->board = (int **)malloc(sumplete->size * sizeof(int *));
+  sumplete->states = (int **)malloc(sumplete->size * sizeof(int *));
+  sumplete->cols = (int *)malloc(sumplete->size * sizeof(int *));
+  sumplete->rows = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->playername = "";
   sumplete->level = "";
   sumplete->isFinished = false;
 
-  for (int row = 0; row < size; row++) {
-    sumplete->board[row] = (int *)malloc(size * sizeof(int *));
-    sumplete->states[row] = (int *)malloc(size * sizeof(int *));
+  for (int row = 0; row < sumplete->size; row++) {
+    sumplete->board[row] = (int *)malloc(sumplete->size * sizeof(int *));
+    sumplete->states[row] = (int *)malloc(sumplete->size * sizeof(int *));
   }
 }
 
@@ -152,7 +151,7 @@ void startNewGame(Sumplete *sumplete) {
   selectBoardSize(sumplete);
   selectLevel(sumplete);
 
-  initialize(sumplete, sumplete->size);
+  initialize(sumplete);
   continueGame(sumplete);
 }
 
