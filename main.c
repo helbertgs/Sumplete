@@ -90,6 +90,27 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
   sumplete->states[row][col] = 2;
 }
 
+void startNewGame(Sumplete *sumplete) {
+}
+
+void loadGame(Sumplete *sumplete) {
+}
+
+void continueGame(Sumplete *sumplete) {
+}
+
+void showRanking(Sumplete *sumplete) {
+}
+
+void quiGame(Sumplete *sumplete) {
+}
+
+void menu(Sumplete *sumplete) {
+}
+
 int main(void) {
+  Sumplete sumplete;
+
+  menu(&sumplete);
   return 0;
 }
