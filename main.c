@@ -9,6 +9,7 @@
 #define RED "\033[0;31m"
 #define GREEN "\033[0;32m"
 
+// Estrutura de dados com todas as informações necessárias para o funcionamento do jogo.
 typedef struct Sumplete Sumplete;
 struct Sumplete {
   int **board;
@@ -21,6 +22,7 @@ struct Sumplete {
   int **states;
 };
 
+// Inicializa as informações do jogo.
 void initialize(Sumplete *sumplete, int size) {
   sumplete->board = (int **)malloc(size * sizeof(int *));
   sumplete->states = (int **)malloc(size * sizeof(int *));
@@ -92,22 +94,28 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
   sumplete->states[row][col] = 2;
 }
 
+// Inicia um novo jogo.
 void startNewGame(Sumplete *sumplete) {
 }
 
+// Carrega um jogo salvo.
 void loadGame(Sumplete *sumplete) {
 }
 
+// Continua com o jogo atual.
 void continueGame(Sumplete *sumplete) {
 }
 
+// Exibe o ranking.
 void showRanking(Sumplete *sumplete) {
 }
 
+// Encerra o jogo.
 void exitGame(Sumplete *sumplete) {
   sumplete->isFinished = true;
 }
 
+// Menu principal do jogo.
 void menu(Sumplete *sumplete) {
   printf("Bem vindo ao jogo SUMPLETE\n\n0. Sair do jogo\n1. Começar um novo "
          "jogo\n2. Continuar um jogo salvo em arquivo\n3. Continuar o jogo "
