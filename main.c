@@ -94,8 +94,66 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
   sumplete->states[row][col] = 2;
 }
 
+void selectPlayerName(Sumplete *sumplete) {
+  bool execute = true;
+
+  while (execute) {
+    char playername[20];
+    printf("Digite o nome do jogador 1: ");
+    scanf("%s", playername);
+
+    if (playername != "") {
+      sumplete->playername = playername;
+      execute = false;
+    }
+  }
+}
+
+// Solcita ao jogador o tamanho do tabuleiro.
+void selectBoardSize(Sumplete *sumplete) {
+  bool execute = true;
+
+  while (execute) {
+    int *size;
+    printf("Digite o tamanho do tabuleiro (3 a 9): ");
+    scanf("%d", size);
+
+    if (size > 2 &&  size < 10) {
+      sumplete->size = size;
+      execute = false
+    }
+  }
+}
+
+// Solicita ao jogador o nivel de dificuldade do tabuleiro apenas se a dimensão do tabuleiro for maior que 4.
+void selectLevel(Sumplete *sumplete) {
+  if (sumplete->size < 5) {
+    sumplete->level = "F";
+    return;
+  }
+
+  bool execute = true;
+
+  while (execute) {
+    char *level;
+    printf("Digite o nivel de dificuldade:\nF - Facil\nM - Medio\nD - Dificil\nDificuldade: ");
+    scanf("%c", level);
+
+    if (level == "D" || level == "F" || level == "M") {
+      sumplete->level = level;
+      execute = false;
+    }
+  }
+}
+
 // Inicia um novo jogo.
 void startNewGame(Sumplete *sumplete) {
+  selectPlayerName(sumplete);
+  selectBoardSize(sumplete);
+  selectLevel(sumplete);
+
+  initialize(sumplete, sumplete->size);
+  continueGame(sumplete);
 }
 
 // Carrega um jogo salvo.
