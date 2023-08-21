@@ -102,10 +102,37 @@ void continueGame(Sumplete *sumplete) {
 void showRanking(Sumplete *sumplete) {
 }
 
-void quiGame(Sumplete *sumplete) {
+void exitGame(Sumplete *sumplete) {
 }
 
 void menu(Sumplete *sumplete) {
+  printf("Bem vindo ao jogo SUMPLETE\n\n0. Sair do jogo\n1. Começar um novo "
+         "jogo\n2. Continuar um jogo salvo em arquivo\n3. Continuar o jogo "
+         "atual\n4. Exibir o ranking\nDurante o jogo digite \"voltar\" para "
+         "retornar ao menu.\n\nEscolha a opção: ");
+
+  int option;
+  scanf("%d", &option);
+
+  switch (option) {
+  case 0:
+    exitGame(sumplete);
+    break;
+  case 1:
+    startNewGame(sumplete);
+    break;
+  case 2:
+    loadGame(sumplete);
+    break;
+  case 3:
+    continueGame(sumplete);
+    break;
+  case 4:
+    showRanking(sumplete);
+    break;
+  default:
+    printf("Comando desconhecido!");
+  }
 }
 
 int main(void) {
