@@ -29,8 +29,6 @@ void initialize(Sumplete *sumplete) {
   sumplete->states = (int **)malloc(sumplete->size * sizeof(int *));
   sumplete->cols = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->rows = (int *)malloc(sumplete->size * sizeof(int *));
-  sumplete->playername = "";
-  sumplete->level = "";
   sumplete->isFinished = false;
 
   for (int row = 0; row < sumplete->size; row++) {
@@ -60,6 +58,7 @@ void changeCharacterColor(int value, int state) {
 
 // Função responsável por exibir o board.
 void printBoard(Sumplete *sumplete) {
+  printf("Dificuldade: %s\n", sumplete->level);
   for (int row = 0; row < sumplete->size; row++) {
     for (int col = 0; col < sumplete->size; col++) {
       changeCharacterColor(sumplete->board[row][col],
@@ -96,6 +95,55 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
   sumplete->states[row][col] = 2;
 }
 
+// Le os dados de um arquivo e carrega os mesmos em uma string.
+char* readAndLoadFile(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo");
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long fileLength = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* content = (char*)malloc(fileLength + 1);
+    if (content == NULL) {
+        perror("Erro ao alocar memória");
+        fclose(file);
+        return NULL;
+    }
+
+    size_t bytesRead = fread(content, 1, fileLength, file);
+    if (bytesRead != (size_t)fileLength) {
+        perror("Erro ao ler o arquivo");
+        free(content);
+        fclose(file);
+        return NULL;
+    }
+
+    content[fileLength] = '\0';
+
+    fclose(file);
+    return content;
+}
+
+// Salva os dados de uma string em um arquivo.
+void saveToFile(const char* filename, const char* content) {
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo para escrita");
+        return;
+    }
+
+    if (fprintf(file, "%s", content) < 0) {
+        perror("Erro ao escrever no arquivo");
+    }
+
+    fclose(file);
+}
+
+// Seleciona o nome do jogador
 void selectPlayerName(Sumplete *sumplete) {
   bool execute = true;
 
@@ -142,7 +190,7 @@ void selectLevel(Sumplete *sumplete) {
   while (execute) {
     char level;
     printf("Digite o nivel de dificuldade:");
-	printf("\nF - Facil\nM - Medio\nD - Dificil\nDificuldade: ");
+    printf("\nF - Facil\nM - Medio\nD - Dificil\nDificuldade: ");
     scanf(" %c", &level);
 
     char *aux = &level;
@@ -161,24 +209,31 @@ void startNewGame(Sumplete *sumplete) {
   selectLevel(sumplete);
   initialize(sumplete);
   printBoard(sumplete);
-  // continueGame(sumplete);
 }
 
+	  // Exibe o ranking.
+void showRanking(Sumplete *sumplete) {}
+
+// Encerra o jogo.
+void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
+	  
 // Carrega um jogo salvo.
 void loadGame(Sumplete *sumplete) {}
 
 // Continua com o jogo atual.
 void continueGame(Sumplete *sumplete) {
-  char *command;
+  char* command;
   printf("%s, digite o comando: ", sumplete->playername);
   scanf("%s", command);
+
+	switch (command) {
+		case "sair":
+			exitGame(sumplete);
+			break;
+		default:
+		continueGame(sumplete);
+	}
 }
-
-// Exibe o ranking.
-void showRanking(Sumplete *sumplete) {}
-
-// Encerra o jogo.
-void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
 
 // Menu principal do jogo.
 void menu(Sumplete *sumplete) {
@@ -213,7 +268,11 @@ void menu(Sumplete *sumplete) {
 
 int main(void) {
   Sumplete sumplete;
-
   menu(&sumplete);
+
+  while(!sumplete.isFinished) {
+	continueGame(&sumplete);
+  }
+	
   return 0;
 }
