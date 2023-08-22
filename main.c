@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 // Definitions
 #define WHITE "\033[0;37m"
@@ -27,6 +28,7 @@ struct Ranking {
 typedef struct Sumplete Sumplete;
 struct Sumplete {
   int **board;
+  int **solution;
   int *cols;
   bool isFinished;
   bool isShowMenu;
@@ -35,20 +37,26 @@ struct Sumplete {
   int *rows;
   int size;
   int **states;
+  time_t start;
+  time_t end;
 };
 
 // Inicializa as informações do jogo.
 void initialize(Sumplete *sumplete) {
   sumplete->board = (int **)malloc(sumplete->size * sizeof(int *));
+  sumplete->solution = (int **)malloc(sumplete->size * sizeof(int *));
   sumplete->states = (int **)malloc(sumplete->size * sizeof(int *));
   sumplete->cols = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->rows = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->isFinished = false;
   sumplete->isShowMenu = false;
+  sumplete->start = time(0);
+  sumplete->end = time(0);
 
   for (int row = 0; row < sumplete->size; row++) {
     sumplete->board[row] = (int *)malloc(sumplete->size * sizeof(int *));
     sumplete->states[row] = (int *)malloc(sumplete->size * sizeof(int *));
+    sumplete->solution[row] = (int *)malloc(sumplete->size * sizeof(int *));
   }
 }
 
@@ -65,16 +73,14 @@ void generateBoard(Sumplete *sumplete) {
     generateRandomArray(sumplete->size, sumplete->board[row]);
   }
 
-  int auxMatrix[sumplete->size][sumplete->size];
-
   // Determina quais os elementos serão usados no somatório das linhas/colunas.
   for (int i = 0; i < sumplete->size; i++) {
     for (int j = 0; j < sumplete->size; j++) {
       int num = rand() % 7 + 1;
       if (num < 5) {
-        auxMatrix[i][j] = 0;
+        sumplete->solution[i][j] = 0;
       } else {
-        auxMatrix[i][j] = sumplete->board[i][j];
+        sumplete->solution[i][j] = sumplete->board[i][j];
       }
     }
   }
@@ -82,7 +88,7 @@ void generateBoard(Sumplete *sumplete) {
   for (int i = 0; i < sumplete->size; i++) {
     int sum = 0;
     for (int j = 0; j < sumplete->size; j++) {
-      sum += auxMatrix[i][j];
+      sum += sumplete->solution[i][j];
     }
     sumplete->rows[i] = sum;
   }
@@ -90,7 +96,7 @@ void generateBoard(Sumplete *sumplete) {
   for (int i = 0; i < sumplete->size; i++) {
     int sum = 0;
     for (int j = 0; j < sumplete->size; j++) {
-      sum += auxMatrix[j][i];
+      sum += sumplete->solution[j][i];
     }
     sumplete->cols[i] = sum;
   }
@@ -117,10 +123,35 @@ void changeCharacterColor(int value, int state) {
 
 // Função responsável por exibir o board.
 void printBoard(Sumplete *sumplete) {
-  printf("Dificuldade: %s\n", sumplete->level);
+  sumplete->end = time(0);
+  printf("Time: %f\n", difftime(sumplete->end, sumplete->start));
   for (int row = 0; row < sumplete->size; row++) {
     for (int col = 0; col < sumplete->size; col++) {
       changeCharacterColor(sumplete->board[row][col],
+                           sumplete->states[row][col]);
+    }
+
+    printf("| %d\n", sumplete->rows[row]);
+  }
+
+  for (int i = 0; i < 2 * sumplete->size + 3; i++) {
+    printf("-");
+  }
+  printf("\n");
+
+  for (int col = 0; col < sumplete->size; col++) {
+    printf("%d ", sumplete->cols[col]);
+  }
+
+  printf("\n\n");
+}
+
+// Função responsável por exibir o board.
+void printSolution(Sumplete *sumplete) {
+  printf("\n");
+  for (int row = 0; row < sumplete->size; row++) {
+    for (int col = 0; col < sumplete->size; col++) {
+      changeCharacterColor(sumplete->solution[row][col],
                            sumplete->states[row][col]);
     }
 
@@ -297,16 +328,63 @@ void selectLevel(Sumplete *sumplete) {
 // Encerra o jogo.
 void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
 
+// Altera a matriz de estado onde os elemntos informam se o elemento deve ser
+// removido ou mantido, com base na matriz de solução.
+void resolve(Sumplete *sumplete) {
+  for (int row = 0; row < sumplete->size; row++) {
+    for (int col = 0; col < sumplete->size; col++) {
+      if (sumplete->solution[row][col] > 0) {
+        markAsRetain(sumplete, row, col);
+      } else {
+        markAsRemoved(sumplete, row, col);
+      }
+    }
+  }
+}
+
+void saveGame(Sumplete *sumplete) {
+
+  char rows[40];
+
+  for (int row = 0; row < sumplete->size; row++) {
+    if (row == 0) {
+      sprintf(rows, "%d", sumplete->rows[row]);
+    } else {
+      sprintf(rows, "%s %d", rows, sumplete->rows[row]);
+    }
+  }
+
+  FILE *fp;
+  fp = fopen("save.txt", "w");
+
+  char text[1024];
+  sprintf(text, "%d\n%s\n%s\n%d", sumplete->size, rows, sumplete->playername,
+          (int)difftime(time(0), sumplete->start));
+
+  fputs(text, fp);
+  fputs("\r\n", fp);
+
+  fclose(fp);
+
+  // char matrix[256];
+
+  // for (int row = 0; row < sumplete->size; row++) {
+  //   for (int col = 0; col < sumplete->size; col++) {
+  //     sprintf(matrix, "%s %d", matrix, sumplete->board[row][col]);
+  //   }
+  //   sprintf(matrix, "%s\n", matrix);
+  //   printf("%s", matrix);
+  // }
+}
+
 // Continua com o jogo atual.
 void continueGame(Sumplete *sumplete) {
   sumplete->isFinished = false;
+
+  printBoard(sumplete);
   char command[20];
   printf("%s, digite o comando: ", sumplete->playername);
   scanf(" %s", command);
-
-  for (int i = 0; command[i]; i++) {
-    command[i] = tolower(command[i]);
-  }
 
   if (strcmp(command, "voltar") == 0) {
     sumplete->isShowMenu = true;
@@ -314,6 +392,10 @@ void continueGame(Sumplete *sumplete) {
     printf("Opcao selecionada: Manter\n");
   } else if (strcmp(command, "remover") == 0) {
     printf("Opcao selecionada: Remover\n");
+  } else if (strcmp(command, "resolver") == 0) {
+    resolve(sumplete);
+  } else if (strcmp(command, "salvar") == 0) {
+    saveGame(sumplete);
   } else {
     printf("Opcao invalida\n");
   }
@@ -326,8 +408,7 @@ void startNewGame(Sumplete *sumplete) {
   selectLevel(sumplete);
   initialize(sumplete);
   generateBoard(sumplete);
-  printBoard(sumplete);
-  // continueGame(sumplete);
+  continueGame(sumplete);
 }
 
 // Exibe o ranking.
