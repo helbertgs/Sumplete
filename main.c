@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Definitions
 #define WHITE "\033[0;37m"
@@ -16,8 +17,9 @@ struct Sumplete {
   int **board;
   int *cols;
   bool isFinished;
+  bool isShowMenu;
   char *level;
-  char *playername;
+  char playername[20];
   int *rows;
   int size;
   int **states;
@@ -30,6 +32,7 @@ void initialize(Sumplete *sumplete) {
   sumplete->cols = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->rows = (int *)malloc(sumplete->size * sizeof(int *));
   sumplete->isFinished = false;
+  sumplete->isShowMenu = false;
 
   for (int row = 0; row < sumplete->size; row++) {
     sumplete->board[row] = (int *)malloc(sumplete->size * sizeof(int *));
@@ -96,51 +99,51 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
 }
 
 // Le os dados de um arquivo e carrega os mesmos em uma string.
-char* readAndLoadFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Erro ao abrir o arquivo");
-        return NULL;
-    }
+char *readAndLoadFile(const char *filename) {
+  FILE *file = fopen(filename, "r");
+  if (file == NULL) {
+    perror("Erro ao abrir o arquivo");
+    return NULL;
+  }
 
-    fseek(file, 0, SEEK_END);
-    long fileLength = ftell(file);
-    fseek(file, 0, SEEK_SET);
+  fseek(file, 0, SEEK_END);
+  long fileLength = ftell(file);
+  fseek(file, 0, SEEK_SET);
 
-    char* content = (char*)malloc(fileLength + 1);
-    if (content == NULL) {
-        perror("Erro ao alocar memória");
-        fclose(file);
-        return NULL;
-    }
-
-    size_t bytesRead = fread(content, 1, fileLength, file);
-    if (bytesRead != (size_t)fileLength) {
-        perror("Erro ao ler o arquivo");
-        free(content);
-        fclose(file);
-        return NULL;
-    }
-
-    content[fileLength] = '\0';
-
+  char *content = (char *)malloc(fileLength + 1);
+  if (content == NULL) {
+    perror("Erro ao alocar memória");
     fclose(file);
-    return content;
+    return NULL;
+  }
+
+  size_t bytesRead = fread(content, 1, fileLength, file);
+  if (bytesRead != (size_t)fileLength) {
+    perror("Erro ao ler o arquivo");
+    free(content);
+    fclose(file);
+    return NULL;
+  }
+
+  content[fileLength] = '\0';
+
+  fclose(file);
+  return content;
 }
 
 // Salva os dados de uma string em um arquivo.
-void saveToFile(const char* filename, const char* content) {
-    FILE* file = fopen(filename, "w");
-    if (file == NULL) {
-        perror("Erro ao abrir o arquivo para escrita");
-        return;
-    }
+void saveToFile(const char *filename, const char *content) {
+  FILE *file = fopen(filename, "w");
+  if (file == NULL) {
+    perror("Erro ao abrir o arquivo para escrita");
+    return;
+  }
 
-    if (fprintf(file, "%s", content) < 0) {
-        perror("Erro ao escrever no arquivo");
-    }
+  if (fprintf(file, "%s", content) < 0) {
+    perror("Erro ao escrever no arquivo");
+  }
 
-    fclose(file);
+  fclose(file);
 }
 
 // Seleciona o nome do jogador
@@ -152,8 +155,8 @@ void selectPlayerName(Sumplete *sumplete) {
     printf("Digite o nome do jogador 1: ");
     scanf("%s", playername);
 
-    if (playername != "") {
-      sumplete->playername = playername;
+    if (strcmp(playername, "") != 0) {
+      strncpy(sumplete->playername, playername, 20);
       execute = false;
     }
   }
@@ -202,38 +205,45 @@ void selectLevel(Sumplete *sumplete) {
   }
 }
 
+// Encerra o jogo.
+void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
+
+// Continua com o jogo atual.
+void continueGame(Sumplete *sumplete) {
+  sumplete->isFinished = false;
+  char command[20];
+  printf("%s, digite o comando: ", sumplete->playername);
+  scanf(" %s", command);
+
+  for (int i = 0; command[i]; i++) {
+    command[i] = tolower(command[i]);
+  }
+
+  if (strcmp(command, "voltar") == 0) {
+    sumplete->isShowMenu = true;
+  } else if (strcmp(command, "manter") == 0) {
+    printf("Opcao selecionada: Manter\n");
+  } else if (strcmp(command, "remover") == 0) {
+    printf("Opcao selecionada: Remover\n");
+  } else {
+    printf("Opcao invalida\n");
+  }
+}
+
 // Inicia um novo jogo.
 void startNewGame(Sumplete *sumplete) {
   selectPlayerName(sumplete);
   selectBoardSize(sumplete);
   selectLevel(sumplete);
   initialize(sumplete);
-  printBoard(sumplete);
+  continueGame(sumplete);
 }
 
-	  // Exibe o ranking.
+// Exibe o ranking.
 void showRanking(Sumplete *sumplete) {}
 
-// Encerra o jogo.
-void exitGame(Sumplete *sumplete) { sumplete->isFinished = true; }
-	  
 // Carrega um jogo salvo.
-void loadGame(Sumplete *sumplete) {}
-
-// Continua com o jogo atual.
-void continueGame(Sumplete *sumplete) {
-  char* command;
-  printf("%s, digite o comando: ", sumplete->playername);
-  scanf("%s", command);
-
-	switch (command) {
-		case "sair":
-			exitGame(sumplete);
-			break;
-		default:
-		continueGame(sumplete);
-	}
-}
+void loadGame(Sumplete *sumplete) { printf("Arquivo carregado com sucesso!"); }
 
 // Menu principal do jogo.
 void menu(Sumplete *sumplete) {
@@ -264,15 +274,24 @@ void menu(Sumplete *sumplete) {
   default:
     printf("Comando desconhecido!");
   }
+
+  while (!sumplete->isFinished) {
+    if (sumplete->isShowMenu) {
+      sumplete->isFinished = true;
+    } else {
+      continueGame(sumplete);
+    }
+  }
+
+  if (sumplete->isShowMenu) {
+    sumplete->isShowMenu = false;
+    menu(sumplete);
+  }
 }
 
 int main(void) {
   Sumplete sumplete;
   menu(&sumplete);
 
-  while(!sumplete.isFinished) {
-	continueGame(&sumplete);
-  }
-	
   return 0;
 }
