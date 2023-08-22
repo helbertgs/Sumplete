@@ -10,6 +10,18 @@
 #define RED "\033[0;31m"
 #define GREEN "\033[0;32m"
 
+typedef struct Score Score;
+struct Score {
+  char playername[20];
+  double time;
+};
+
+typedef struct Ranking Ranking;
+struct Ranking {
+  int size;
+  Score score[5];
+};
+
 // Estrutura de dados com todas as informações necessárias para o funcionamento
 // do jogo.
 typedef struct Sumplete Sumplete;
@@ -37,6 +49,50 @@ void initialize(Sumplete *sumplete) {
   for (int row = 0; row < sumplete->size; row++) {
     sumplete->board[row] = (int *)malloc(sumplete->size * sizeof(int *));
     sumplete->states[row] = (int *)malloc(sumplete->size * sizeof(int *));
+  }
+}
+
+// Gera um array com numeros aleatorios entre 1 e 9.
+void generateRandomArray(int size, int arr[]) {
+  for (int i = 0; i < size; i++) {
+    arr[i] = rand() % 7 + 1;
+  }
+}
+
+// Gera o board com os numeros aleatorios.
+void generateBoard(Sumplete *sumplete) {
+  for (int row = 0; row < sumplete->size; row++) {
+    generateRandomArray(sumplete->size, sumplete->board[row]);
+  }
+
+  int auxMatrix[sumplete->size][sumplete->size];
+
+  // Determina quais os elementos serão usados no somatório das linhas/colunas.
+  for (int i = 0; i < sumplete->size; i++) {
+    for (int j = 0; j < sumplete->size; j++) {
+      int num = rand() % 7 + 1;
+      if (num < 5) {
+        auxMatrix[i][j] = 0;
+      } else {
+        auxMatrix[i][j] = sumplete->board[i][j];
+      }
+    }
+  }
+
+  for (int i = 0; i < sumplete->size; i++) {
+    int sum = 0;
+    for (int j = 0; j < sumplete->size; j++) {
+      sum += auxMatrix[i][j];
+    }
+    sumplete->rows[i] = sum;
+  }
+
+  for (int i = 0; i < sumplete->size; i++) {
+    int sum = 0;
+    for (int j = 0; j < sumplete->size; j++) {
+      sum += auxMatrix[j][i];
+    }
+    sumplete->cols[i] = sum;
   }
 }
 
@@ -129,6 +185,39 @@ char *readAndLoadFile(const char *filename) {
 
   fclose(file);
   return content;
+}
+
+char *readLineFromFile(const char *filename, int lineNumber) {
+  FILE *file = fopen(filename, "r");
+  if (file == NULL) {
+    perror("Erro ao abrir o arquivo");
+    return NULL;
+  }
+
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  for (int i = 1; i <= lineNumber; i++) {
+    read = getline(&line, &len, file);
+    if (read == -1) {
+      if (feof(file)) {
+        fprintf(stderr, "A linha %d está fora dos limites do arquivo\n",
+                lineNumber);
+        free(line);
+        fclose(file);
+        return NULL;
+      } else {
+        perror("Erro ao ler a linha do arquivo");
+        free(line);
+        fclose(file);
+        return NULL;
+      }
+    }
+  }
+
+  fclose(file);
+  return line;
 }
 
 // Salva os dados de uma string em um arquivo.
@@ -236,14 +325,20 @@ void startNewGame(Sumplete *sumplete) {
   selectBoardSize(sumplete);
   selectLevel(sumplete);
   initialize(sumplete);
-  continueGame(sumplete);
+  generateBoard(sumplete);
+  printBoard(sumplete);
+  // continueGame(sumplete);
 }
 
 // Exibe o ranking.
-void showRanking(Sumplete *sumplete) {}
+void showRanking(Sumplete *sumplete) {
+  char *file = readAndLoadFile("sumplete.ini");
+  printf("%s\n\n", file);
+  sumplete->isShowMenu = true;
+}
 
 // Carrega um jogo salvo.
-void loadGame(Sumplete *sumplete) { printf("Arquivo carregado com sucesso!"); }
+void loadGame(Sumplete *sumplete) { sumplete->board[2][1] = 5; }
 
 // Menu principal do jogo.
 void menu(Sumplete *sumplete) {
