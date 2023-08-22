@@ -185,6 +185,34 @@ void markAsRetain(Sumplete *sumplete, int row, int col) {
   sumplete->states[row][col] = 2;
 }
 
+char *join(int *arr, int length) {
+
+  // Calcula o tamanho total necessário para a string resultante
+  int totalSize = 0;
+  for (int i = 0; i < length; i++) {
+    // Considera espaço para cada número e espaço entre os números
+    totalSize += snprintf(NULL, 0, "%d", arr[i]) + 1;
+  }
+
+  // Aloca memória para a string resultante
+  char *result = (char *)malloc(totalSize);
+  if (result == NULL) {
+    perror("Erro na alocação de memória");
+    exit(EXIT_FAILURE);
+  }
+
+  // Constrói a string resultante
+  int offset = 0;
+  for (int i = 0; i < length; i++) {
+    offset += snprintf(result + offset, totalSize - offset, "%d", arr[i]);
+    if (i < length - 1) {
+      offset += snprintf(result + offset, totalSize - offset, " ");
+    }
+  }
+
+  return result;
+}
+
 // Le os dados de um arquivo e carrega os mesmos em uma string.
 char *readAndLoadFile(const char *filename) {
   FILE *file = fopen(filename, "r");
@@ -344,27 +372,23 @@ void resolve(Sumplete *sumplete) {
 
 void saveGame(Sumplete *sumplete) {
 
-  char rows[40];
-
-  for (int row = 0; row < sumplete->size; row++) {
-    if (row == 0) {
-      sprintf(rows, "%d", sumplete->rows[row]);
-    } else {
-      sprintf(rows, "%s %d", rows, sumplete->rows[row]);
-    }
-  }
+  char *rows = join(sumplete->rows, sumplete->size);
+  char *cols = join(sumplete->cols, sumplete->size);
 
   FILE *fp;
   fp = fopen("save.txt", "w");
 
   char text[1024];
-  sprintf(text, "%d\n%s\n%s\n%d", sumplete->size, rows, sumplete->playername,
-          (int)difftime(time(0), sumplete->start));
+  sprintf(text, "%d\n%s\n%s\n%s\n%d", sumplete->size, rows, cols,
+          sumplete->playername, (int)difftime(time(0), sumplete->start));
 
   fputs(text, fp);
   fputs("\r\n", fp);
 
   fclose(fp);
+
+  free(rows);
+  free(cols);
 
   // char matrix[256];
 
@@ -418,8 +442,169 @@ void showRanking(Sumplete *sumplete) {
   sumplete->isShowMenu = true;
 }
 
+// Remove espaco vazio de uma string.
+// Link referencia:
+// https://www.scaler.com/topics/program-to-remove-white-spaces-from-string-in-c/
+char *removeSpace(char *str) {
+  int i, j = 0;
+  for (i = 0; str[i] != '\0'; i++) {
+    if (str[i] != ' ') {
+      str[j] = str[i];
+      j++;
+    }
+  }
+  str[j] = '\0';
+  return str;
+}
+
+void removeSpaces(char *str, int i, int j) {
+  if (str[i] == '\0')
+    return;
+  if (str[i] == ' ') {
+    removeSpaces(str, i + 1, j);
+
+  } else {
+
+    str[j] = str[i];
+
+    removeSpaces(str, i + 1, j + 1);
+  }
+}
+
+// Converte string para int removendo buffer de memoria.
+int convertToInt(char *str) {
+  int value;
+  char string[100];
+
+  strcpy(string, str);
+  value = atoi(string);
+
+  return value;
+}
+
 // Carrega um jogo salvo.
-void loadGame(Sumplete *sumplete) { sumplete->board[2][1] = 5; }
+void loadGame(Sumplete *sumplete) {
+  // Variavel para mapear em qual linha do arquivo esta a leitura.
+  int currentFileLine = 1;
+  char *fileName = "save.txt";
+
+  // Determina o tamanho e dificuldade do jogo.
+  int size = atoi(readLineFromFile(fileName, currentFileLine));
+  sumplete->size = size;
+
+  switch (size) {
+  case 5:
+    sumplete->level = "M";
+  case 6:
+    sumplete->level = "M";
+  case 7:
+    sumplete->level = "D";
+  case 8:
+    sumplete->level = "D";
+  case 9:
+    sumplete->level = "D";
+  default:
+    sumplete->level = "F";
+  }
+
+  initialize(sumplete);
+  currentFileLine++;
+
+  // Le os valores do board de acordo com o tamanho da primeira linha.
+  for (int i = 0; i < size; i++) {
+    char *line = readLineFromFile(fileName, currentFileLine);
+    removeSpace(line);
+    for (int j = 0; j < size; j++) {
+      char letter = line[j];
+      sumplete->board[i][j] = convertToInt(&letter);
+    }
+    currentFileLine++;
+  }
+
+  // Le os valores do somatorio das linhas.
+  char *linesSum = readLineFromFile(fileName, currentFileLine);
+  removeSpace(linesSum);
+  for (int i = 0; i < size; i++) {
+    char letter = linesSum[i];
+    sumplete->rows[i] = convertToInt(&letter);
+  }
+  currentFileLine++;
+
+  // Le os valores do somatorio das colunas.
+  char *columnsSum = readLineFromFile(fileName, currentFileLine);
+  removeSpace(columnsSum);
+  for (int j = 0; j < size; j++) {
+    char letter = columnsSum[j];
+    sumplete->cols[j] = convertToInt(&letter);
+  }
+  currentFileLine++;
+
+  printBoard(sumplete);
+
+  // Le quantos valores foram marcados.
+  int retained = atoi(readLineFromFile(fileName, currentFileLine));
+  currentFileLine++;
+
+  // Le a posicao dos valores marcados.
+  if (retained > 0) {
+    int retainedPositions[retained][2];
+    for (int i = 0; i < retained; i++) {
+      char *retainedPosition = readLineFromFile(fileName, currentFileLine);
+      removeSpaces(retainedPosition, 0, 0);
+      char letterRow = retainedPosition[0];
+      char strRow[20];
+      strcpy(strRow, &letterRow);
+      int row = atoi(strRow);
+
+      char letterCol = retainedPosition[1];
+      char strCol[20];
+      strcpy(strCol, &letterCol);
+      int col = atoi(strCol);
+
+      // markAsRetain(sumplete, row, col);
+      currentFileLine++;
+      free(retainedPosition);
+    }
+  }
+
+  // Le quantos valores foram removidos.
+  int removed = atoi(readLineFromFile(fileName, currentFileLine));
+  currentFileLine++;
+
+  // Le a posicao dos valores removidos.
+  if (removed > 0) {
+    int removedPositions[retained][2];
+    for (int i = 0; i < removed; i++) {
+      char *removedPosition = readLineFromFile(fileName, currentFileLine);
+      removeSpaces(removedPosition, 0, 0);
+      char letterRow = removedPosition[0];
+      char strRow[20];
+      strcpy(strRow, &letterRow);
+      int row = atoi(strRow);
+
+      char letterCol = removedPosition[1];
+      char strCol[20];
+      strcpy(strCol, &letterCol);
+      int col = atoi(strCol);
+
+      // markAsRemoved(sumplete, row, col);
+      currentFileLine++;
+      free(removedPosition);
+    }
+  }
+
+  // Le o nome do jogador
+  char *playerName = readLineFromFile(fileName, currentFileLine);
+  sprintf(sumplete->playername, "%s", playerName);
+  currentFileLine++;
+
+  // Le o seu tempo de jogo
+  char *playedTime = readLineFromFile(fileName, currentFileLine);
+  int playedTimeValue = atoi(playedTime);
+  // sumplete->totalTime = playedTime;
+
+  printBoard(sumplete);
+}
 
 // Menu principal do jogo.
 void menu(Sumplete *sumplete) {
